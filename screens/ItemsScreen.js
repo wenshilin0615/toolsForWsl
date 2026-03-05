@@ -1,8 +1,15 @@
-import React, { useState, useMemo } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback, useMemo } from 'react';
+import { View, ScrollView, TouchableOpacity } from 'react-native';
 import { FAB, List, Dialog, Portal, TextInput, Button, Text, Searchbar, Checkbox } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
+import useBatchSelection from '../hooks/useBatchSelection';
+import useDialog from '../hooks/useDialog';
+import useSearch from '../hooks/useSearch';
+import commonStyles from '../components/commonStyles';
+
+// 对话框类型
+const DIALOG_TYPES = ['add', 'edit', 'delete', 'clear', 'alert'];
 
 /**
  * 项目管理屏幕
@@ -12,106 +19,139 @@ const ItemsScreen = ({ items, saveItems, clearListItems }) => {
   const route = useRoute();
   const { listId, listName } = route.params;
 
-  const [dialogVisible, setDialogVisible] = useState(false);
-  const [editDialogVisible, setEditDialogVisible] = useState(false);
-  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
-  const [clearDialogVisible, setClearDialogVisible] = useState(false);
-  const [alertDialogVisible, setAlertDialogVisible] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
+  // 对话框状态
+  const { dialogs, showDialog, hideDialog, showAlert, hideAlert, alertMessage } = useDialog(DIALOG_TYPES);
+  
+  // 输入状态
   const [itemName, setItemName] = useState('');
   const [editingItem, setEditingItem] = useState(null);
   const [itemToDelete, setItemToDelete] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [batchMode, setBatchMode] = useState(false);
 
   // 过滤当前列表的项目
   const listItems = useMemo(() => {
     return items.filter(item => item.listId === listId);
   }, [items, listId]);
 
-  // 搜索过滤
-  const filteredItems = useMemo(() => {
-    if (!searchQuery) return listItems;
-    return listItems.filter(item => 
-      item.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [listItems, searchQuery]);
+  // 搜索状态
+  const { searchQuery, setSearchQuery, filteredItems } = useSearch(listItems);
 
-  /**
-   * 显示添加项目对话框
-   */
-  const showAddDialog = () => {
-    setItemName('');
-    setDialogVisible(true);
-  };
-
-  /**
-   * 显示编辑项目对话框
-   */
-  const showEditDialog = (item) => {
-    setEditingItem(item);
-    setItemName(item.name);
-    setEditDialogVisible(true);
-  };
-
-  /**
-   * 显示删除确认对话框
-   */
-  const showDeleteDialog = (item) => {
-    setItemToDelete(item);
-    setDeleteDialogVisible(true);
-  };
+  // 批量选择状态
+  const {
+    batchMode,
+    selectedIds,
+    selectedCount,
+    isAllSelected,
+    isSelected,
+    toggleSelection,
+    toggleSelectAll,
+    enterBatchMode,
+    exitBatchMode,
+  } = useBatchSelection(filteredItems);
 
   /**
    * 检查项目名称是否重复
    */
-  const isDuplicateName = (name, excludeId = null) => {
+  const isDuplicateName = useCallback((name, excludeId = null) => {
     return listItems.some(item => 
       item.name === name.trim() && item.id !== excludeId
     );
-  };
+  }, [listItems]);
 
   /**
-   * 保存新项目
+   * 显示添加项目对话框
    */
-  const handleSave = () => {
+  const showAddDialog = useCallback(() => {
+    setItemName('');
+    showDialog('add');
+  }, [showDialog]);
+
+  /**
+   * 显示编辑项目对话框
+   */
+  const showEditDialog = useCallback((item) => {
+    setEditingItem(item);
+    setItemName(item.name);
+    showDialog('edit');
+  }, [showDialog]);
+
+  /**
+   * 显示删除确认对话框
+   */
+  const showDeleteDialog = useCallback((item) => {
+    setItemToDelete(item);
+    showDialog('delete');
+  }, [showDialog]);
+
+  /**
+   * 解析输入文本，支持逗号、分号、顿号、空格分隔
+   * 返回去重后的名称数组
+   */
+  const parseNames = useCallback((text) => {
+    // 支持分隔符：逗号、分号、中文顿号、空格、换行
+    const separators = /[,;，、\s\n]+/;
+    const names = text
+      .split(separators)
+      .map(name => name.trim())
+      .filter(name => name.length > 0);
+    // 对输入本身去重
+    return [...new Set(names)];
+  }, []);
+
+  /**
+   * 保存新项目（支持批量新增）
+   */
+  const handleSave = useCallback(() => {
     if (!itemName.trim()) {
-      setAlertMessage('请输入项目名称');
-      setAlertDialogVisible(true);
+      showAlert('请输入项目名称');
       return;
     }
 
-    if (isDuplicateName(itemName)) {
-      setAlertMessage('项目名称已存在');
-      setAlertDialogVisible(true);
+    const names = parseNames(itemName);
+    if (names.length === 0) {
+      showAlert('请输入有效的项目名称');
       return;
     }
 
-    const newItem = {
-      id: Date.now().toString(),
-      name: itemName.trim(),
+    // 过滤掉数据库中已存在的名称
+    const existingNames = names.filter(name => isDuplicateName(name));
+    const validNames = names.filter(name => !isDuplicateName(name));
+
+    if (validNames.length === 0) {
+      showAlert('所有名称已存在');
+      return;
+    }
+
+    // 批量创建新项目，使用时间戳+索引生成唯一ID
+    const timestamp = Date.now();
+    const newItems = validNames.map((name, index) => ({
+      id: `${timestamp}_${index}`,
+      name,
       listId,
       createdAt: new Date().toISOString(),
-    };
+    }));
 
-    saveItems([...items, newItem]);
-    setDialogVisible(false);
-  };
+    saveItems([...items, ...newItems]);
+    hideDialog('add');
+
+    // 如果有已存在的名称，提示用户
+    if (existingNames.length > 0) {
+      setTimeout(() => {
+        showAlert(`已跳过 ${existingNames.length} 个已存在名称：${existingNames.join('、')}`);
+      }, 100);
+    }
+  }, [itemName, listId, items, saveItems, isDuplicateName, showAlert, hideDialog, parseNames]);
 
   /**
    * 保存编辑
    */
-  const handleEditSave = () => {
+  const handleEditSave = useCallback(() => {
     if (!itemName.trim()) {
-      setAlertMessage('请输入项目名称');
-      setAlertDialogVisible(true);
+      showAlert('请输入项目名称');
       return;
     }
 
     if (isDuplicateName(itemName, editingItem.id)) {
-      setAlertMessage('项目名称已存在');
-      setAlertDialogVisible(true);
+      showAlert('项目名称已存在');
       return;
     }
 
@@ -120,107 +160,80 @@ const ItemsScreen = ({ items, saveItems, clearListItems }) => {
     );
 
     saveItems(updatedItems);
-    setEditDialogVisible(false);
-  };
+    hideDialog('edit');
+  }, [itemName, editingItem, items, saveItems, isDuplicateName, showAlert, hideDialog]);
 
   /**
    * 确认删除项目
    */
-  const confirmDelete = () => {
+  const confirmDelete = useCallback(() => {
     if (itemToDelete) {
       const updatedItems = items.filter(i => i.id !== itemToDelete.id);
       saveItems(updatedItems);
     }
-    setDeleteDialogVisible(false);
+    hideDialog('delete');
     setItemToDelete(null);
-  };
-
-  /**
-   * 切换项目选择状态
-   */
-  const toggleItemSelection = (itemId) => {
-    setSelectedItems(prev => {
-      if (prev.includes(itemId)) {
-        return prev.filter(id => id !== itemId);
-      } else {
-        return [...prev, itemId];
-      }
-    });
-  };
-
-  /**
-   * 全选/取消全选
-   */
-  const toggleSelectAll = () => {
-    if (selectedItems.length === filteredItems.length) {
-      setSelectedItems([]);
-    } else {
-      setSelectedItems(filteredItems.map(item => item.id));
-    }
-  };
+  }, [itemToDelete, items, saveItems, hideDialog]);
 
   /**
    * 批量删除所选项目
    */
-  const batchDeleteItems = () => {
-    if (selectedItems.length === 0) {
-      setAlertMessage('请先选择要删除的项目');
-      setAlertDialogVisible(true);
+  const batchDeleteItems = useCallback(() => {
+    if (selectedIds.length === 0) {
+      showAlert('请先选择要删除的项目');
       return;
     }
 
-    const updatedItems = items.filter(item => !selectedItems.includes(item.id));
+    const updatedItems = items.filter(item => !selectedIds.includes(item.id));
     saveItems(updatedItems);
-    setSelectedItems([]);
-    setBatchMode(false);
-  };
+    exitBatchMode();
+  }, [selectedIds, items, saveItems, exitBatchMode, showAlert]);
 
   /**
    * 确认清空列表
    */
-  const confirmClear = () => {
+  const confirmClear = useCallback(() => {
     clearListItems(listId);
-    setClearDialogVisible(false);
-    setBatchMode(false);
-    setSelectedItems([]);
-  };
+    hideDialog('clear');
+    exitBatchMode();
+  }, [listId, clearListItems, hideDialog, exitBatchMode]);
 
   return (
-    <View style={styles.container}>
+    <View style={commonStyles.container}>
       {/* 搜索栏 */}
       <Searchbar
         placeholder="搜索项目"
         onChangeText={setSearchQuery}
         value={searchQuery}
-        style={styles.searchBar}
+        style={commonStyles.searchBar}
       />
 
       {/* 项目总数和操作栏 */}
       {listItems.length > 0 && (
-        <View style={styles.countBanner}>
+        <View style={commonStyles.countBanner}>
           <MaterialCommunityIcons name="format-list-bulleted" size={16} color="#2196F3" />
-          <Text style={styles.countText}>共 {listItems.length} 个项目</Text>
+          <Text style={commonStyles.countText}>共 {listItems.length} 个项目</Text>
           {!batchMode && (
-            <View style={styles.bannerActions}>
-              <TouchableOpacity onPress={() => setBatchMode(true)} style={styles.bannerAction}>
-                <Text style={styles.actionText}>批量选择</Text>
+            <View style={commonStyles.bannerActions}>
+              <TouchableOpacity onPress={enterBatchMode} style={commonStyles.bannerAction}>
+                <Text style={commonStyles.actionText}>批量选择</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setClearDialogVisible(true)} style={styles.bannerAction}>
-                <Text style={styles.deleteText}>清空</Text>
+              <TouchableOpacity onPress={() => showDialog('clear')} style={commonStyles.bannerAction}>
+                <Text style={commonStyles.deleteText}>清空</Text>
               </TouchableOpacity>
             </View>
           )}
         </View>
       )}
       
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={commonStyles.scrollView}>
         {filteredItems.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
+          <View style={commonStyles.emptyContainer}>
+            <Text style={commonStyles.emptyText}>
               {searchQuery ? '没有找到匹配的项目' : '暂无项目'}
             </Text>
             {!searchQuery && (
-              <Text style={styles.emptySubText}>请点击右下角按钮添加</Text>
+              <Text style={commonStyles.emptySubText}>请点击右下角按钮添加</Text>
             )}
           </View>
         ) : (
@@ -232,27 +245,27 @@ const ItemsScreen = ({ items, saveItems, clearListItems }) => {
                 description={`添加于 ${new Date(item.createdAt).toLocaleDateString()}`}
                 left={() => batchMode && (
                   <Checkbox
-                    status={selectedItems.includes(item.id) ? 'checked' : 'unchecked'}
-                    onPress={() => toggleItemSelection(item.id)}
+                    status={isSelected(item.id) ? 'checked' : 'unchecked'}
+                    onPress={() => toggleSelection(item.id)}
                   />
                 )}
                 right={() => !batchMode && (
-                  <View style={styles.actionButtons}>
+                  <View style={commonStyles.actionButtons}>
                     <TouchableOpacity
-                      style={styles.actionButton}
+                      style={commonStyles.actionButton}
                       onPress={() => showEditDialog(item)}
                     >
-                      <Text style={styles.actionText}>编辑</Text>
+                      <Text style={commonStyles.actionText}>编辑</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={styles.actionButton}
+                      style={commonStyles.actionButton}
                       onPress={() => showDeleteDialog(item)}
                     >
-                      <Text style={styles.deleteText}>删除</Text>
+                      <Text style={commonStyles.deleteText}>删除</Text>
                     </TouchableOpacity>
                   </View>
                 )}
-                onPress={() => batchMode && toggleItemSelection(item.id)}
+                onPress={() => batchMode && toggleSelection(item.id)}
               />
             ))}
           </List.Section>
@@ -261,31 +274,24 @@ const ItemsScreen = ({ items, saveItems, clearListItems }) => {
 
       {/* 批量操作栏 */}
       {batchMode && (
-        <View style={styles.batchActions}>
-          <View style={styles.batchLeftActions}>
-            <TouchableOpacity onPress={toggleSelectAll} style={styles.selectAllButton}>
-              <Text style={styles.actionText}>
-                {selectedItems.length === filteredItems.length ? '取消全选' : '全选'}
+        <View style={commonStyles.batchActions}>
+          <View style={commonStyles.batchLeftActions}>
+            <TouchableOpacity onPress={toggleSelectAll} style={commonStyles.selectAllButton}>
+              <Text style={commonStyles.actionText}>
+                {isAllSelected ? '取消全选' : '全选'}
               </Text>
             </TouchableOpacity>
-            <Text style={styles.selectedCount}>已选 {selectedItems.length} 项</Text>
+            <Text style={commonStyles.selectedCount}>已选 {selectedCount} 项</Text>
           </View>
-          <View style={styles.batchRightActions}>
-            <Button
-              mode="outlined"
-              onPress={() => {
-                setBatchMode(false);
-                setSelectedItems([]);
-              }}
-              style={styles.batchButton}
-            >
+          <View style={commonStyles.batchRightActions}>
+            <Button mode="outlined" onPress={exitBatchMode} style={commonStyles.batchButton}>
               取消
             </Button>
             <Button
               mode="contained"
               onPress={batchDeleteItems}
-              style={styles.batchButton}
-              disabled={selectedItems.length === 0}
+              style={commonStyles.batchButton}
+              disabled={selectedCount === 0}
             >
               删除
             </Button>
@@ -293,195 +299,85 @@ const ItemsScreen = ({ items, saveItems, clearListItems }) => {
         </View>
       )}
 
-      {/* 添加项目对话框 */}
+      {/* 对话框 */}
       <Portal>
-        <Dialog visible={dialogVisible} onDismiss={() => setDialogVisible(false)}>
+        <Dialog visible={dialogs.add} onDismiss={() => hideDialog('add')}>
           <Dialog.Title>添加项目</Dialog.Title>
           <Dialog.Content>
             <TextInput
               label="项目名称"
               value={itemName}
               onChangeText={setItemName}
-              style={styles.input}
-              placeholder="例如：北京"
+              style={commonStyles.input}
+              placeholder="例如：北京，上海，广州"
+              multiline
             />
+            <Text style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
+              支持批量添加，用逗号、分号、顿号或空格分隔
+            </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setDialogVisible(false)}>取消</Button>
+            <Button onPress={() => hideDialog('add')}>取消</Button>
             <Button onPress={handleSave}>保存</Button>
           </Dialog.Actions>
         </Dialog>
 
-        {/* 编辑项目对话框 */}
-        <Dialog visible={editDialogVisible} onDismiss={() => setEditDialogVisible(false)}>
+        <Dialog visible={dialogs.edit} onDismiss={() => hideDialog('edit')}>
           <Dialog.Title>编辑项目</Dialog.Title>
           <Dialog.Content>
             <TextInput
               label="项目名称"
               value={itemName}
               onChangeText={setItemName}
-              style={styles.input}
+              style={commonStyles.input}
               placeholder="例如：北京"
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setEditDialogVisible(false)}>取消</Button>
+            <Button onPress={() => hideDialog('edit')}>取消</Button>
             <Button onPress={handleEditSave}>保存</Button>
           </Dialog.Actions>
         </Dialog>
 
-        {/* 删除确认对话框 */}
-        <Dialog visible={deleteDialogVisible} onDismiss={() => setDeleteDialogVisible(false)}>
+        <Dialog visible={dialogs.delete} onDismiss={() => hideDialog('delete')}>
           <Dialog.Title>确认删除</Dialog.Title>
           <Dialog.Content>
             <Text>确定要删除项目 "{itemToDelete?.name}" 吗？</Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setDeleteDialogVisible(false)}>取消</Button>
+            <Button onPress={() => hideDialog('delete')}>取消</Button>
             <Button onPress={confirmDelete} textColor="#ff3b30">删除</Button>
           </Dialog.Actions>
         </Dialog>
 
-        {/* 清空确认对话框 */}
-        <Dialog visible={clearDialogVisible} onDismiss={() => setClearDialogVisible(false)}>
+        <Dialog visible={dialogs.clear} onDismiss={() => hideDialog('clear')}>
           <Dialog.Title>确认清空</Dialog.Title>
           <Dialog.Content>
             <Text>确定要清空列表 "{listName}" 中的所有项目吗？</Text>
             <Text style={{ color: '#ff3b30', marginTop: 8 }}>此操作不可恢复</Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setClearDialogVisible(false)}>取消</Button>
+            <Button onPress={() => hideDialog('clear')}>取消</Button>
             <Button onPress={confirmClear} textColor="#ff3b30">清空</Button>
           </Dialog.Actions>
         </Dialog>
 
-        {/* 提示对话框 */}
-        <Dialog visible={alertDialogVisible} onDismiss={() => setAlertDialogVisible(false)}>
+        <Dialog visible={dialogs.alert} onDismiss={hideAlert}>
           <Dialog.Title>提示</Dialog.Title>
           <Dialog.Content>
             <Text>{alertMessage}</Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setAlertDialogVisible(false)}>确定</Button>
+            <Button onPress={hideAlert}>确定</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
 
       {!batchMode && (
-        <FAB
-          style={styles.fab}
-          icon="plus"
-          onPress={showAddDialog}
-        />
+        <FAB style={commonStyles.fab} icon="plus" onPress={showAddDialog} />
       )}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  searchBar: {
-    margin: 16,
-    marginBottom: 0,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  emptyContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    paddingVertical: 100,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-  },
-  emptySubText: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  countBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    marginTop: 16,
-  },
-  countText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 6,
-  },
-  bannerActions: {
-    flexDirection: 'row',
-    marginLeft: 'auto',
-  },
-  bannerAction: {
-    marginLeft: 16,
-  },
-  actionText: {
-    color: '#2196F3',
-    fontSize: 14,
-  },
-  deleteText: {
-    color: '#ff3b30',
-    fontSize: 14,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  actionButton: {
-    padding: 8,
-    justifyContent: 'center',
-  },
-  input: {
-    marginBottom: 16,
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-  },
-  batchActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  batchLeftActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  selectAllButton: {
-    paddingVertical: 8,
-    paddingRight: 16,
-  },
-  selectedCount: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 8,
-  },
-  batchRightActions: {
-    flexDirection: 'row',
-  },
-  batchButton: {
-    marginLeft: 8,
-  },
-});
 
 export default ItemsScreen;

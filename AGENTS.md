@@ -51,11 +51,17 @@ npm install
 # 启动开发服务器
 npm start
 
+# 启动 Web 预览版本(8088端口)
+npx expo start --clear --web --port 8088
+
 # 指定平台运行
 npm run android    # Android
 npm run ios        # iOS
 npm run web        # Web
 ```
+
+## 构建预览版本
+`npx eas build --platform android --profile preview`
 
 ## 核心模块说明
 
