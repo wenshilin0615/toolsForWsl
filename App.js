@@ -10,6 +10,10 @@ import ItemsScreen from './screens/ItemsScreen';
 
 // 导入 Hook
 import { useStorage } from './hooks/useStorage';
+import { useWallpaper } from './hooks/useWallpaper';
+
+// 导入常量
+import { SCREEN_NAMES } from './constants';
 
 /**
  * 定义应用主题配置
@@ -43,12 +47,23 @@ export default function App() {
     clearListItems,
   } = useStorage();
 
+  // 使用壁纸 Hook
+  const {
+    wallpaperSettings,
+    customWallpapers,
+    loadWallpaperSettings,
+    saveWallpaperSettings,
+    saveCustomWallpapers,
+    getWallpaperSettings,
+  } = useWallpaper();
+
   /**
    * 组件挂载时从本地存储加载数据
    */
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    loadWallpaperSettings();
+  }, [loadData, loadWallpaperSettings]);
 
   return (
     <PaperProvider theme={theme}>
@@ -68,6 +83,10 @@ export default function App() {
                 lists={lists} 
                 saveLists={saveLists} 
                 deleteListWithItems={deleteListWithItems}
+                wallpaperSettings={getWallpaperSettings(SCREEN_NAMES.LISTS)}
+                saveWallpaperSettings={(settings) => saveWallpaperSettings(SCREEN_NAMES.LISTS, settings)}
+                customWallpapers={customWallpapers}
+                saveCustomWallpapers={saveCustomWallpapers}
               />
             )}
           </Stack.Screen>
@@ -81,6 +100,10 @@ export default function App() {
                 items={items} 
                 saveItems={saveItems} 
                 clearListItems={clearListItems}
+                wallpaperSettings={getWallpaperSettings(SCREEN_NAMES.ITEMS)}
+                saveWallpaperSettings={(settings) => saveWallpaperSettings(SCREEN_NAMES.ITEMS, settings)}
+                customWallpapers={customWallpapers}
+                saveCustomWallpapers={saveCustomWallpapers}
               />
             )}
           </Stack.Screen>

@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { View, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback, useMemo } from 'react';
+import { View, ScrollView, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { FAB, List, Dialog, Portal, TextInput, Button, Text, Searchbar, Checkbox } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -7,6 +7,8 @@ import useBatchSelection from '../hooks/useBatchSelection';
 import useDialog from '../hooks/useDialog';
 import useSearch from '../hooks/useSearch';
 import commonStyles from '../components/commonStyles';
+import WallpaperSettings from '../components/WallpaperSettings';
+import { BUILT_IN_WALLPAPERS, SCREEN_NAMES } from '../constants';
 
 // 对话框类型
 const DIALOG_TYPES = ['add', 'delete', 'alert'];
@@ -15,11 +17,22 @@ const DIALOG_TYPES = ['add', 'delete', 'alert'];
  * 列表管理屏幕
  * 显示所有列表，支持创建新列表、搜索和批量操作
  */
-const ListsScreen = ({ lists, saveLists, deleteListWithItems }) => {
+const ListsScreen = ({ 
+  lists, 
+  saveLists, 
+  deleteListWithItems, 
+  wallpaperSettings, 
+  saveWallpaperSettings,
+  customWallpapers,
+  saveCustomWallpapers,
+}) => {
   const navigation = useNavigation();
   
   // 对话框状态
   const { dialogs, showDialog, hideDialog, showAlert, hideAlert, alertMessage } = useDialog(DIALOG_TYPES);
+  
+  // 壁纸设置对话框状态
+  const [wallpaperDialogVisible, setWallpaperDialogVisible] = useState(false);
   
   // 输入状态
   const [listName, setListName] = useState('');
@@ -40,6 +53,22 @@ const ListsScreen = ({ lists, saveLists, deleteListWithItems }) => {
     enterBatchMode,
     exitBatchMode,
   } = useBatchSelection(filteredLists);
+
+  // 获取当前壁纸（支持内置和自定义）
+  const currentWallpaper = useMemo(() => {
+    const wallpaperId = wallpaperSettings?.wallpaperId;
+    if (!wallpaperId || wallpaperId === 'none') {
+      return BUILT_IN_WALLPAPERS[0];
+    }
+    // 先在内置壁纸中查找
+    const builtIn = BUILT_IN_WALLPAPERS.find(w => w.id === wallpaperId);
+    if (builtIn) return builtIn;
+    // 再在自定义壁纸中查找
+    const custom = customWallpapers.find(w => w.id === wallpaperId);
+    return custom || BUILT_IN_WALLPAPERS[0];
+  }, [wallpaperSettings, customWallpapers]);
+
+  const wallpaperOpacity = wallpaperSettings?.opacity ?? 0.3;
 
   /**
    * 显示添加列表对话框
@@ -115,8 +144,17 @@ const ListsScreen = ({ lists, saveLists, deleteListWithItems }) => {
     navigation.navigate('Items', { listId: list.id, listName: list.name });
   }, [navigation]);
 
-  return (
-    <View style={commonStyles.container}>
+  /**
+   * 保存壁纸设置
+   */
+  const handleSaveWallpaper = useCallback((settings) => {
+    saveWallpaperSettings(settings);
+    setWallpaperDialogVisible(false);
+  }, [saveWallpaperSettings]);
+
+  // 渲染内容
+  const renderContent = () => (
+    <>
       {/* 搜索栏 */}
       <Searchbar
         placeholder="搜索列表"
@@ -132,6 +170,9 @@ const ListsScreen = ({ lists, saveLists, deleteListWithItems }) => {
           <Text style={commonStyles.countText}>共 {lists.length} 个列表</Text>
           {!batchMode && (
             <View style={commonStyles.bannerActions}>
+              <TouchableOpacity onPress={() => setWallpaperDialogVisible(true)} style={commonStyles.bannerAction}>
+                <Text style={commonStyles.actionText}>壁纸</Text>
+              </TouchableOpacity>
               <TouchableOpacity onPress={enterBatchMode} style={commonStyles.bannerAction}>
                 <Text style={commonStyles.actionText}>批量选择</Text>
               </TouchableOpacity>
@@ -249,11 +290,61 @@ const ListsScreen = ({ lists, saveLists, deleteListWithItems }) => {
         </Dialog>
       </Portal>
 
+      {/* 壁纸设置对话框 */}
+      <WallpaperSettings
+        visible={wallpaperDialogVisible}
+        onDismiss={() => setWallpaperDialogVisible(false)}
+        currentSettings={wallpaperSettings}
+        onSave={handleSaveWallpaper}
+        customWallpapers={customWallpapers}
+        saveCustomWallpapers={saveCustomWallpapers}
+      />
+
       {!batchMode && (
         <FAB style={commonStyles.fab} icon="plus" onPress={showAddDialog} />
       )}
-    </View>
+    </>
   );
+
+  // 如果有壁纸，使用绝对定位的 Image 作为背景
+  if (currentWallpaper.uri) {
+    // 区分内置壁纸(require对象)和自定义壁纸(字符串路径)
+    const imageSource = currentWallpaper.isCustom 
+      ? { uri: currentWallpaper.uri }
+      : currentWallpaper.uri;
+    
+    return (
+      <View style={commonStyles.container}>
+        <Image
+          source={imageSource}
+          style={styles.wallpaperImage}
+          resizeMode="cover"
+        />
+        <View style={[styles.overlay, { backgroundColor: `rgba(255, 255, 255, ${1 - wallpaperOpacity})` }]}>
+          {renderContent()}
+        </View>
+      </View>
+    );
+  }
+
+  // 无壁纸时直接渲染
+  return <View style={commonStyles.container}>{renderContent()}</View>;
 };
+
+const styles = StyleSheet.create({
+  wallpaperImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+});
 
 export default ListsScreen;
