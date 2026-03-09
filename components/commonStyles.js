@@ -15,6 +15,7 @@ const commonStyles = StyleSheet.create({
   searchBar: {
     margin: 16,
     marginBottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
   },
   
   // 滚动视图
@@ -47,9 +48,9 @@ const commonStyles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: 'rgba(238, 238, 238, 0.5)',
     marginTop: 16,
   },
   countText: {
@@ -102,9 +103,9 @@ const commonStyles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'white',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: 'rgba(224, 224, 224, 0.5)',
   },
   batchLeftActions: {
     flexDirection: 'row',
