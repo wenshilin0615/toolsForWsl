@@ -31,6 +31,9 @@
         "projectId": "564a31b7-d457-40de-a9f9-dcfa73494fec"
       }
     },
-    "owner": "salinawen"
+    "owner": "salinawen",
+    "plugins": [
+      "@react-native-community/datetimepicker"
+    ]
   }
 }

@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   ITEMS: 'items',
   WALLPAPER: 'wallpaper_settings',
   CUSTOM_WALLPAPERS: 'custom_wallpapers',
+  EXPIRY_ITEMS: 'expiry_items',
 };
 
 // 默认图标配置
@@ -23,10 +24,25 @@ export const DEFAULT_COLORS = {
   ITEM: '#FF4081',
 };
 
+// 过期风险等级颜色配置
+export const EXPIRY_COLORS = {
+  SAFE: '#4CAF50',      // 绿色：距离过期 > 90 天
+  WARNING: '#FFC107',   // 黄色：距离过期 30-90 天
+  DANGER: '#FF5722',    // 红色：距离过期 < 30 天
+  EXPIRED: '#D32F2F',   // 深红色：已过期
+};
+
+// 过期风险阈值（天数）
+export const EXPIRY_THRESHOLDS = {
+  SAFE_DAYS: 90,        // 绿色阈值
+  WARNING_DAYS: 30,     // 黄色阈值
+};
+
 // 屏幕名称
 export const SCREEN_NAMES = {
   LISTS: 'lists',
   ITEMS: 'items',
+  EXPIRY_COUNTDOWN: 'expiryCountdown',
 };
 
 // 默认壁纸设置
