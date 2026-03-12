@@ -1,5 +1,20 @@
 import { StyleSheet } from 'react-native';
 
+// 西瓜红可爱风主题色
+export const THEME_COLORS = {
+  primary: '#FF6B6B',      // 西瓜红
+  primaryLight: '#FF8E8E', // 浅西瓜红
+  accent: '#FFB6C1',       // 浅粉色
+  accentLight: '#FFD1DC',  // 更浅的粉色
+  background: '#FFF5F5',   // 浅粉背景
+  card: '#FFFFFF',
+  text: '#5D4E60',         // 柔和的深紫色
+  textLight: '#8B7E8B',    // 浅紫色文字
+  border: '#FFE4E1',       // 浅粉边框
+  danger: '#FF6B6B',
+  success: '#7BC47F',      // 柔和的绿色
+};
+
 /**
  * 公共样式
  * 两个屏幕共用的样式定义
@@ -8,14 +23,20 @@ const commonStyles = StyleSheet.create({
   // 容器
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: THEME_COLORS.background,
   },
   
   // 搜索栏
   searchBar: {
     margin: 16,
     marginBottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: THEME_COLORS.card,
+    borderRadius: 25,
+    elevation: 2,
+    shadowColor: THEME_COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   
   // 滚动视图
@@ -25,19 +46,19 @@ const commonStyles = StyleSheet.create({
   
   // 空状态
   emptyContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    paddingVertical: 100,
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    color: THEME_COLORS.textLight,
     textAlign: 'center',
   },
   emptySubText: {
     fontSize: 14,
-    color: '#999',
+    color: THEME_COLORS.accent,
     textAlign: 'center',
     marginTop: 8,
   },
@@ -47,16 +68,20 @@ const commonStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    paddingVertical: 12,
+    backgroundColor: THEME_COLORS.card,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(238, 238, 238, 0.5)',
+    borderBottomColor: THEME_COLORS.border,
     marginTop: 16,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    marginHorizontal: 16,
   },
   countText: {
     fontSize: 14,
-    color: '#666',
+    color: THEME_COLORS.text,
     marginLeft: 6,
+    fontWeight: '500',
   },
   bannerActions: {
     flexDirection: 'row',
@@ -68,11 +93,12 @@ const commonStyles = StyleSheet.create({
   
   // 操作按钮
   actionText: {
-    color: '#2196F3',
+    color: THEME_COLORS.primary,
     fontSize: 14,
+    fontWeight: '500',
   },
   deleteText: {
-    color: '#ff3b30',
+    color: THEME_COLORS.danger,
     fontSize: 14,
   },
   actionButtons: {
@@ -87,6 +113,7 @@ const commonStyles = StyleSheet.create({
   // 输入框
   input: {
     marginBottom: 16,
+    backgroundColor: THEME_COLORS.card,
   },
   
   // 浮动按钮
@@ -95,6 +122,13 @@ const commonStyles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 0,
+    backgroundColor: THEME_COLORS.primary,
+    borderRadius: 30,
+    elevation: 4,
+    shadowColor: THEME_COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   
   // 批量操作栏
@@ -103,9 +137,9 @@ const commonStyles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: THEME_COLORS.card,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(224, 224, 224, 0.5)',
+    borderTopColor: THEME_COLORS.border,
   },
   batchLeftActions: {
     flexDirection: 'row',
@@ -117,7 +151,7 @@ const commonStyles = StyleSheet.create({
   },
   selectedCount: {
     fontSize: 14,
-    color: '#666',
+    color: THEME_COLORS.text,
     marginLeft: 8,
   },
   batchRightActions: {
@@ -125,6 +159,7 @@ const commonStyles = StyleSheet.create({
   },
   batchButton: {
     marginLeft: 8,
+    borderRadius: 20,
   },
 });
 

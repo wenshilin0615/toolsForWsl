@@ -6,9 +6,8 @@ import { useRoute } from '@react-navigation/native';
 import useBatchSelection from '../hooks/useBatchSelection';
 import useDialog from '../hooks/useDialog';
 import useSearch from '../hooks/useSearch';
-import commonStyles from '../components/commonStyles';
-import WallpaperSettings from '../components/WallpaperSettings';
-import { BUILT_IN_WALLPAPERS, SCREEN_NAMES } from '../constants';
+import commonStyles, { THEME_COLORS } from '../components/commonStyles';
+import { BUILT_IN_WALLPAPERS } from '../constants';
 
 // 对话框类型
 const DIALOG_TYPES = ['add', 'edit', 'delete', 'clear', 'alert'];
@@ -22,18 +21,12 @@ const ItemsScreen = ({
   saveItems, 
   clearListItems, 
   wallpaperSettings, 
-  saveWallpaperSettings,
-  customWallpapers,
-  saveCustomWallpapers,
 }) => {
   const route = useRoute();
   const { listId, listName } = route.params;
 
   // 对话框状态
   const { dialogs, showDialog, hideDialog, showAlert, hideAlert, alertMessage } = useDialog(DIALOG_TYPES);
-  
-  // 壁纸设置对话框状态
-  const [wallpaperDialogVisible, setWallpaperDialogVisible] = useState(false);
   
   // 输入状态
   const [itemName, setItemName] = useState('');
@@ -61,19 +54,19 @@ const ItemsScreen = ({
     exitBatchMode,
   } = useBatchSelection(filteredItems);
 
-  // 获取当前壁纸（支持内置和自定义）
+  // 获取当前壁纸
   const currentWallpaper = useMemo(() => {
     const wallpaperId = wallpaperSettings?.wallpaperId;
     if (!wallpaperId || wallpaperId === 'none') {
       return BUILT_IN_WALLPAPERS[0];
     }
-    // 先在内置壁纸中查找
     const builtIn = BUILT_IN_WALLPAPERS.find(w => w.id === wallpaperId);
     if (builtIn) return builtIn;
-    // 再在自定义壁纸中查找
-    const custom = customWallpapers.find(w => w.id === wallpaperId);
-    return custom || BUILT_IN_WALLPAPERS[0];
-  }, [wallpaperSettings, customWallpapers]);
+    if (wallpaperSettings.customWallpaper) {
+      return wallpaperSettings.customWallpaper;
+    }
+    return BUILT_IN_WALLPAPERS[0];
+  }, [wallpaperSettings]);
 
   const wallpaperOpacity = wallpaperSettings?.opacity ?? 0.3;
 
@@ -227,14 +220,6 @@ const ItemsScreen = ({
     exitBatchMode();
   }, [listId, clearListItems, hideDialog, exitBatchMode]);
 
-  /**
-   * 保存壁纸设置
-   */
-  const handleSaveWallpaper = useCallback((settings) => {
-    saveWallpaperSettings(settings);
-    setWallpaperDialogVisible(false);
-  }, [saveWallpaperSettings]);
-
   // 渲染内容
   const renderContent = () => (
     <>
@@ -249,13 +234,10 @@ const ItemsScreen = ({
       {/* 项目总数和操作栏 */}
       {listItems.length > 0 && (
         <View style={commonStyles.countBanner}>
-          <MaterialCommunityIcons name="format-list-bulleted" size={16} color="#2196F3" />
+          <MaterialCommunityIcons name="format-list-bulleted" size={16} color={THEME_COLORS.primary} />
           <Text style={commonStyles.countText}>共 {listItems.length} 个项目</Text>
           {!batchMode && (
             <View style={commonStyles.bannerActions}>
-              <TouchableOpacity onPress={() => setWallpaperDialogVisible(true)} style={commonStyles.bannerAction}>
-                <Text style={commonStyles.actionText}>壁纸</Text>
-              </TouchableOpacity>
               <TouchableOpacity onPress={enterBatchMode} style={commonStyles.bannerAction}>
                 <Text style={commonStyles.actionText}>批量选择</Text>
               </TouchableOpacity>
@@ -267,16 +249,17 @@ const ItemsScreen = ({
         </View>
       )}
       
-      <ScrollView style={commonStyles.scrollView}>
+      <ScrollView style={commonStyles.scrollView} contentContainerStyle={filteredItems.length === 0 ? commonStyles.emptyContainer : null}>
         {filteredItems.length === 0 ? (
-          <View style={commonStyles.emptyContainer}>
+          <>
+            <MaterialCommunityIcons name="text" size={80} color={THEME_COLORS.accent} />
             <Text style={commonStyles.emptyText}>
               {searchQuery ? '没有找到匹配的项目' : '暂无项目'}
             </Text>
             {!searchQuery && (
               <Text style={commonStyles.emptySubText}>请点击右下角按钮添加</Text>
             )}
-          </View>
+          </>
         ) : (
           <List.Section>
             {filteredItems.map((item) => (
@@ -414,16 +397,6 @@ const ItemsScreen = ({
         </Dialog>
       </Portal>
 
-      {/* 壁纸设置对话框 */}
-      <WallpaperSettings
-        visible={wallpaperDialogVisible}
-        onDismiss={() => setWallpaperDialogVisible(false)}
-        currentSettings={wallpaperSettings}
-        onSave={handleSaveWallpaper}
-        customWallpapers={customWallpapers}
-        saveCustomWallpapers={saveCustomWallpapers}
-      />
-
       {!batchMode && (
         <FAB style={commonStyles.fab} icon="plus" onPress={showAddDialog} />
       )}
@@ -432,7 +405,6 @@ const ItemsScreen = ({
 
   // 如果有壁纸，使用绝对定位的 Image 作为背景
   if (currentWallpaper.uri) {
-    // 区分内置壁纸(require对象)和自定义壁纸(字符串路径)
     const imageSource = currentWallpaper.isCustom 
       ? { uri: currentWallpaper.uri }
       : currentWallpaper.uri;

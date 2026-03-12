@@ -4,6 +4,7 @@ import { Dialog, Text, Button, ActivityIndicator, Portal, Checkbox } from 'react
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { BUILT_IN_WALLPAPERS } from '../constants';
+import { THEME_COLORS } from '../components/commonStyles';
 
 const { width } = Dimensions.get('window');
 const GRID_PADDING = 24; // 内容区域内边距
@@ -556,6 +557,8 @@ const WallpaperSettings = ({
 const styles = StyleSheet.create({
   dialog: {
     maxHeight: '70%',
+    backgroundColor: THEME_COLORS.card,
+    borderRadius: 6,
   },
   content: {
     paddingHorizontal: 12,
@@ -576,22 +579,22 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#333',
+    color: THEME_COLORS.text,
     marginTop: 12,
     marginBottom: 8,
   },
   sectionTitleInline: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#333',
+    color: THEME_COLORS.text,
   },
   batchButtonText: {
     fontSize: 13,
-    color: '#2196F3',
+    color: THEME_COLORS.primary,
   },
   hintText: {
     fontSize: 11,
-    color: '#999',
+    color: THEME_COLORS.textLight,
     fontWeight: 'normal',
   },
   wallpaperGrid: {
@@ -607,16 +610,16 @@ const styles = StyleSheet.create({
     height: THUMBNAIL_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 6,
+    borderRadius: 10,
     borderWidth: 2,
     borderColor: 'transparent',
     overflow: 'hidden',
   },
   thumbnailSelected: {
-    borderColor: '#2196F3',
+    borderColor: THEME_COLORS.primary,
   },
   thumbnailBatchSelected: {
-    borderColor: '#ff3b30',
+    borderColor: THEME_COLORS.danger,
   },
   checkboxContainer: {
     position: 'absolute',
@@ -630,7 +633,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#ff3b30',
+    backgroundColor: THEME_COLORS.danger,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
@@ -645,31 +648,31 @@ const styles = StyleSheet.create({
   thumbnail: {
     width: '100%',
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 8,
   },
   noWallpaper: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: THEME_COLORS.accentLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   noWallpaperText: {
     fontSize: 10,
-    color: '#999',
+    color: THEME_COLORS.textLight,
   },
   addButton: {
     width: THUMBNAIL_SIZE,
     height: THUMBNAIL_SIZE,
-    borderRadius: 6,
+    borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: THEME_COLORS.border,
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fafafa',
+    backgroundColor: THEME_COLORS.background,
   },
   addButtonText: {
     fontSize: 28,
-    color: '#999',
+    color: THEME_COLORS.textLight,
   },
   opacityContainer: {
     flexDirection: 'row',
@@ -680,7 +683,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#2196F3',
+    backgroundColor: THEME_COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -692,7 +695,7 @@ const styles = StyleSheet.create({
   opacityBar: {
     flex: 1,
     height: 6,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: THEME_COLORS.border,
     borderRadius: 3,
     marginHorizontal: 10,
     flexDirection: 'row',
@@ -700,7 +703,7 @@ const styles = StyleSheet.create({
   },
   opacityFill: {
     height: '100%',
-    backgroundColor: '#2196F3',
+    backgroundColor: THEME_COLORS.primary,
   },
   opacityEmpty: {
     height: '100%',
@@ -719,18 +722,19 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingHorizontal: 4,
     paddingVertical: 8,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
+    backgroundColor: THEME_COLORS.accentLight,
+    borderRadius: 12,
   },
   selectedCount: {
     fontSize: 13,
-    color: '#666',
+    color: THEME_COLORS.textLight,
   },
   batchButtons: {
     flexDirection: 'row',
   },
   batchButton: {
     marginLeft: 8,
+    borderRadius: 16,
   },
 });
 
