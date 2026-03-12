@@ -31,7 +31,15 @@ const theme = {
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-function ListsStack({ lists, saveLists, deleteListWithItems, items, saveItems, clearListItems, wallpaperSettings }) {
+function ListsStack({ 
+  lists = [], 
+  saveLists = () => {}, 
+  deleteListWithItems = () => {}, 
+  items = [], 
+  saveItems = () => {}, 
+  clearListItems = () => {}, 
+  wallpaperSettings = {} 
+}) {
   return (
     <Stack.Navigator
       screenOptions={{
@@ -70,7 +78,18 @@ function ListsStack({ lists, saveLists, deleteListWithItems, items, saveItems, c
   );
 }
 
-function MainNavigator({ lists, saveLists, deleteListWithItems, items, saveItems, clearListItems, wallpaperSettings, customWallpapers, saveWallpaperSettings, saveCustomWallpapers }) {
+function MainNavigator({ 
+  lists = [], 
+  saveLists = () => {}, 
+  deleteListWithItems = () => {}, 
+  items = [], 
+  saveItems = () => {}, 
+  clearListItems = () => {}, 
+  wallpaperSettings = {}, 
+  customWallpapers = [], 
+  saveWallpaperSettings = () => {}, 
+  saveCustomWallpapers = () => {} 
+}) {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -145,7 +164,12 @@ import WallpaperSettings from './components/WallpaperSettings';
 import { BUILT_IN_WALLPAPERS } from './constants';
 import { useMemo, useState } from 'react';
 
-function SettingsScreen({ wallpaperSettings, saveWallpaperSettings, customWallpapers, saveCustomWallpapers }) {
+function SettingsScreen({ 
+  wallpaperSettings = {}, 
+  saveWallpaperSettings = () => {}, 
+  customWallpapers = [], 
+  saveCustomWallpapers = () => {} 
+}) {
   const [wallpaperDialogVisible, setWallpaperDialogVisible] = useState(false);
 
   const currentWallpaper = useMemo(() => {

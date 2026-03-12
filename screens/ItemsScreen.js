@@ -17,13 +17,13 @@ const DIALOG_TYPES = ['add', 'edit', 'delete', 'clear', 'alert'];
  * 显示指定列表的所有项目，支持添加、编辑、删除、搜索和批量操作
  */
 const ItemsScreen = ({ 
-  items, 
-  saveItems, 
-  clearListItems, 
-  wallpaperSettings, 
+  items = [], 
+  saveItems = () => {}, 
+  clearListItems = () => {}, 
+  wallpaperSettings = {}, 
 }) => {
   const route = useRoute();
-  const { listId, listName } = route.params;
+  const { listId = '', listName = '' } = route?.params || {};
 
   // 对话框状态
   const { dialogs, showDialog, hideDialog, showAlert, hideAlert, alertMessage } = useDialog(DIALOG_TYPES);
@@ -62,7 +62,7 @@ const ItemsScreen = ({
     }
     const builtIn = BUILT_IN_WALLPAPERS.find(w => w.id === wallpaperId);
     if (builtIn) return builtIn;
-    if (wallpaperSettings.customWallpaper) {
+    if (wallpaperSettings?.customWallpaper) {
       return wallpaperSettings.customWallpaper;
     }
     return BUILT_IN_WALLPAPERS[0];

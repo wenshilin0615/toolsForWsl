@@ -87,7 +87,7 @@ const getExpiryText = (daysLeft) => {
   return `${daysLeft} 天`;
 };
 
-export default function ExpiryCountdownScreen({ navigation, wallpaperSettings }) {
+export default function ExpiryCountdownScreen({ navigation = {}, wallpaperSettings = {} }) {
   const [expiryItems, setExpiryItems] = useState([]);
   const [dialogVisible, setDialogVisible] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -399,7 +399,7 @@ export default function ExpiryCountdownScreen({ navigation, wallpaperSettings })
     exitBatchMode();
   }, [selectedIds, expiryItems, exitBatchMode]);
 
-  const renderExpiryItem = ({ item, inBatchMode }) => {
+  const renderExpiryItem = ({ item = {}, inBatchMode = false }) => {
     const daysLeft = calculateDaysUntilExpiry(item.expiryDate);
     const expiryColor = getExpiryColor(daysLeft);
     const expiryText = getExpiryText(daysLeft);
@@ -425,7 +425,7 @@ export default function ExpiryCountdownScreen({ navigation, wallpaperSettings })
             <View style={[styles.daysBadge, { backgroundColor: expiryColor }]}>
               <Text style={styles.daysText}>{expiryText}</Text>
             </View>
-            {!batchMode && (
+            {!inBatchMode && (
               <Menu
                 visible={menuVisible === item.id}
                 onDismiss={() => setMenuVisible(null)}

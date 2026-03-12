@@ -17,10 +17,10 @@ const DIALOG_TYPES = ['add', 'delete', 'alert'];
  * 显示所有列表，支持创建新列表、搜索和批量操作
  */
 const ListsScreen = ({ 
-  lists, 
-  saveLists, 
-  deleteListWithItems, 
-  wallpaperSettings, 
+  lists = [], 
+  saveLists = () => {}, 
+  deleteListWithItems = () => {}, 
+  wallpaperSettings = {}, 
 }) => {
   const navigation = useNavigation();
   
@@ -56,7 +56,7 @@ const ListsScreen = ({
     const builtIn = BUILT_IN_WALLPAPERS.find(w => w.id === wallpaperId);
     if (builtIn) return builtIn;
     // 支持自定义壁纸
-    if (wallpaperSettings.customWallpaper) {
+    if (wallpaperSettings?.customWallpaper) {
       return wallpaperSettings.customWallpaper;
     }
     return BUILT_IN_WALLPAPERS[0];

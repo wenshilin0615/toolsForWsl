@@ -17,12 +17,12 @@ const THUMBNAIL_SIZE = Math.floor((width - GRID_PADDING * 2 - GRID_GAP * (COLUMN
  * 用于选择壁纸和调整透明度
  */
 const WallpaperSettings = ({
-  visible,
-  onDismiss,
-  currentSettings,
-  onSave,
-  customWallpapers,
-  saveCustomWallpapers,
+  visible = false,
+  onDismiss = () => {},
+  currentSettings = {},
+  onSave = () => {},
+  customWallpapers = [],
+  saveCustomWallpapers = () => {},
 }) => {
   const [selectedWallpaperId, setSelectedWallpaperId] = useState('none');
   const [opacity, setOpacity] = useState(0.3);
