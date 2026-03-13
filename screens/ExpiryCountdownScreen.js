@@ -273,29 +273,35 @@ export default function ExpiryCountdownScreen({ navigation = {}, wallpaperSettin
             photoUri = asset.uri;
           }
         } else {
-          // 移动端：复制文件到应用目录
-          const photosDir = `${FileSystem.documentDirectory}expiry_photos/`;
-          const dirInfo = await FileSystem.getInfoAsync(photosDir);
-          if (!dirInfo.exists) {
-            await FileSystem.makeDirectoryAsync(photosDir, { intermediates: true });
+          // 移动端：直接使用 asset.uri，或复制到应用目录
+          try {
+            const photosDir = `${FileSystem.documentDirectory}expiry_photos/`;
+            const dirInfo = await FileSystem.getInfoAsync(photosDir);
+            if (!dirInfo.exists) {
+              await FileSystem.makeDirectoryAsync(photosDir, { intermediates: true });
+            }
+
+            const fileName = `photo_${Date.now()}.jpg`;
+            const destPath = `${photosDir}${fileName}`;
+
+            await FileSystem.copyAsync({
+              from: asset.uri,
+              to: destPath,
+            });
+
+            photoUri = destPath;
+          } catch (fsError) {
+            console.error('FileSystem error:', fsError);
+            // 如果复制失败，直接使用原始 URI
+            photoUri = asset.uri;
           }
-
-          const fileName = `photo_${Date.now()}.jpg`;
-          const destPath = `${photosDir}${fileName}`;
-
-          await FileSystem.copyAsync({
-            from: asset.uri,
-            to: destPath,
-          });
-
-          photoUri = destPath;
         }
 
         setFormData({ ...formData, photoUri });
       }
     } catch (error) {
       console.error('Error picking image:', error);
-      alert('选择图片失败，请重试');
+      alert(`选择图片失败: ${error.message || '请重试'}`);
     }
   };
 
@@ -329,29 +335,35 @@ export default function ExpiryCountdownScreen({ navigation = {}, wallpaperSettin
             photoUri = asset.uri;
           }
         } else {
-          // 移动端：复制文件到应用目录
-          const photosDir = `${FileSystem.documentDirectory}expiry_photos/`;
-          const dirInfo = await FileSystem.getInfoAsync(photosDir);
-          if (!dirInfo.exists) {
-            await FileSystem.makeDirectoryAsync(photosDir, { intermediates: true });
+          // 移动端：复制文件到应用目录，如果失败则使用原始 URI
+          try {
+            const photosDir = `${FileSystem.documentDirectory}expiry_photos/`;
+            const dirInfo = await FileSystem.getInfoAsync(photosDir);
+            if (!dirInfo.exists) {
+              await FileSystem.makeDirectoryAsync(photosDir, { intermediates: true });
+            }
+
+            const fileName = `photo_${Date.now()}.jpg`;
+            const destPath = `${photosDir}${fileName}`;
+
+            await FileSystem.copyAsync({
+              from: asset.uri,
+              to: destPath,
+            });
+
+            photoUri = destPath;
+          } catch (fsError) {
+            console.error('FileSystem error:', fsError);
+            // 如果复制失败，直接使用原始 URI
+            photoUri = asset.uri;
           }
-
-          const fileName = `photo_${Date.now()}.jpg`;
-          const destPath = `${photosDir}${fileName}`;
-
-          await FileSystem.copyAsync({
-            from: asset.uri,
-            to: destPath,
-          });
-
-          photoUri = destPath;
         }
 
         setFormData({ ...formData, photoUri });
       }
     } catch (error) {
       console.error('Error taking photo:', error);
-      alert('拍照失败，请重试');
+      alert(`拍照失败: ${error.message || '请重试'}`);
     }
   };
 

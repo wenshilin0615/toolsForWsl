@@ -113,22 +113,28 @@ const WallpaperSettings = ({
             wallpaperUri = asset.uri;
           }
         } else {
-          // 移动端：复制文件到应用目录
-          const wallpaperDir = `${FileSystem.documentDirectory}wallpapers/`;
-          const dirInfo = await FileSystem.getInfoAsync(wallpaperDir);
-          if (!dirInfo.exists) {
-            await FileSystem.makeDirectoryAsync(wallpaperDir, { intermediates: true });
+          // 移动端：复制文件到应用目录，如果失败则使用原始 URI
+          try {
+            const wallpaperDir = `${FileSystem.documentDirectory}wallpapers/`;
+            const dirInfo = await FileSystem.getInfoAsync(wallpaperDir);
+            if (!dirInfo.exists) {
+              await FileSystem.makeDirectoryAsync(wallpaperDir, { intermediates: true });
+            }
+
+            const fileName = `custom_${Date.now()}.jpg`;
+            const destPath = `${wallpaperDir}${fileName}`;
+
+            await FileSystem.copyAsync({
+              from: asset.uri,
+              to: destPath,
+            });
+
+            wallpaperUri = destPath;
+          } catch (fsError) {
+            console.error('FileSystem error:', fsError);
+            // 如果复制失败，直接使用原始 URI
+            wallpaperUri = asset.uri;
           }
-
-          const fileName = `custom_${Date.now()}.jpg`;
-          const destPath = `${wallpaperDir}${fileName}`;
-
-          await FileSystem.copyAsync({
-            from: asset.uri,
-            to: destPath,
-          });
-
-          wallpaperUri = destPath;
         }
 
         // 添加到自定义壁纸列表
@@ -149,7 +155,7 @@ const WallpaperSettings = ({
       }
     } catch (error) {
       console.error('Error picking image:', error);
-      Alert.alert('错误', '选择图片失败，请重试');
+      Alert.alert('错误', `选择图片失败: ${error.message || '请重试'}`);
     } finally {
       setLoading(false);
     }

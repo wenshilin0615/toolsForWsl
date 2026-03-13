@@ -21,7 +21,13 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.salinawen.toolsForWsl"
+      "package": "com.salinawen.toolsForWsl",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -33,7 +39,20 @@
     },
     "owner": "salinawen",
     "plugins": [
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "允许应用访问您的相册以选择照片",
+          "cameraPermission": "允许应用使用相机拍照"
+        }
+      ],
+      [
+        "expo-file-system",
+        {
+          "photoLibraryPermission": "允许应用保存照片到相册"
+        }
+      ]
     ]
   }
 }
