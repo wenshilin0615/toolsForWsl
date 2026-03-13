@@ -458,6 +458,11 @@ export default function ExpiryCountdownScreen({ navigation = {}, wallpaperSettin
   // 渲染内容
   const renderContent = () => (
     <>
+      {/* 顶部标题栏 */}
+      <View style={commonStyles.headerBar}>
+        <Text style={commonStyles.headerTitle}>保质期倒计时</Text>
+      </View>
+
       {/* 搜索栏 */}
       <Searchbar
         placeholder="搜索物品名称"
@@ -741,7 +746,7 @@ export default function ExpiryCountdownScreen({ navigation = {}, wallpaperSettin
           </Dialog.Actions>
         </Dialog>
 
-        <Dialog visible={deleteDialogVisible} onDismiss={() => setDeleteDialogVisible(false)}>
+        <Dialog visible={deleteDialogVisible} onDismiss={() => setDeleteDialogVisible(false)} style={styles.dialog}>
           <Dialog.Title>确认删除</Dialog.Title>
           <Dialog.Content>
             <Text>确定要删除 "{itemToDelete?.name}" 吗？</Text>

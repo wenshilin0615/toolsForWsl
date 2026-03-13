@@ -12,7 +12,7 @@ import ExpiryCountdownScreen from './screens/ExpiryCountdownScreen';
 import { useStorage } from './hooks/useStorage';
 import { useWallpaper } from './hooks/useWallpaper';
 
-import { THEME_COLORS } from './components/commonStyles';
+import commonStyles, { THEME_COLORS } from './components/commonStyles';
 
 const theme = {
   ...DefaultTheme,
@@ -192,6 +192,11 @@ function SettingsScreen({
 
   const renderContent = () => (
     <>
+      {/* 顶部标题栏 */}
+      <View style={commonStyles.headerBar}>
+        <Text style={commonStyles.headerTitle}>设置</Text>
+      </View>
+
       <List.Section>
         <List.Subheader>外观设置</List.Subheader>
         <List.Item

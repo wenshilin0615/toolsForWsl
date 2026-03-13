@@ -141,6 +141,11 @@ const ListsScreen = ({
   // 渲染内容
   const renderContent = () => (
     <>
+      {/* 顶部标题栏 */}
+      <View style={commonStyles.headerBar}>
+        <Text style={commonStyles.headerTitle}>列表管理</Text>
+      </View>
+
       {/* 搜索栏 */}
       <Searchbar
         placeholder="搜索列表"

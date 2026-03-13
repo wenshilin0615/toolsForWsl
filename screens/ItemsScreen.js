@@ -223,6 +223,11 @@ const ItemsScreen = ({
   // 渲染内容
   const renderContent = () => (
     <>
+      {/* 顶部标题栏 */}
+      <View style={commonStyles.headerBar}>
+        <Text style={commonStyles.headerTitle}>{listName || '项目管理'}</Text>
+      </View>
+
       {/* 搜索栏 */}
       <Searchbar
         placeholder="搜索项目"
@@ -325,7 +330,7 @@ const ItemsScreen = ({
 
       {/* 对话框 */}
       <Portal>
-        <Dialog visible={dialogs.add} onDismiss={() => hideDialog('add')}>
+        <Dialog visible={dialogs.add} onDismiss={() => hideDialog('add')} style={styles.dialog}>
           <Dialog.Title>添加项目</Dialog.Title>
           <Dialog.Content>
             <TextInput
@@ -346,7 +351,7 @@ const ItemsScreen = ({
           </Dialog.Actions>
         </Dialog>
 
-        <Dialog visible={dialogs.edit} onDismiss={() => hideDialog('edit')}>
+        <Dialog visible={dialogs.edit} onDismiss={() => hideDialog('edit')} style={styles.dialog}>
           <Dialog.Title>编辑项目</Dialog.Title>
           <Dialog.Content>
             <TextInput
@@ -363,7 +368,7 @@ const ItemsScreen = ({
           </Dialog.Actions>
         </Dialog>
 
-        <Dialog visible={dialogs.delete} onDismiss={() => hideDialog('delete')}>
+        <Dialog visible={dialogs.delete} onDismiss={() => hideDialog('delete')} style={styles.dialog}>
           <Dialog.Title>确认删除</Dialog.Title>
           <Dialog.Content>
             <Text>确定要删除项目 "{itemToDelete?.name}" 吗？</Text>
@@ -374,7 +379,7 @@ const ItemsScreen = ({
           </Dialog.Actions>
         </Dialog>
 
-        <Dialog visible={dialogs.clear} onDismiss={() => hideDialog('clear')}>
+        <Dialog visible={dialogs.clear} onDismiss={() => hideDialog('clear')} style={styles.dialog}>
           <Dialog.Title>确认清空</Dialog.Title>
           <Dialog.Content>
             <Text>确定要清空列表 "{listName}" 中的所有项目吗？</Text>
@@ -386,7 +391,7 @@ const ItemsScreen = ({
           </Dialog.Actions>
         </Dialog>
 
-        <Dialog visible={dialogs.alert} onDismiss={hideAlert}>
+        <Dialog visible={dialogs.alert} onDismiss={hideAlert} style={styles.dialog}>
           <Dialog.Title>提示</Dialog.Title>
           <Dialog.Content>
             <Text>{alertMessage}</Text>
@@ -440,6 +445,10 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'transparent',
+  },
+  dialog: {
+    borderRadius: 6,
+    backgroundColor: THEME_COLORS.card,
   },
 });
 

@@ -26,6 +26,19 @@ const commonStyles = StyleSheet.create({
     backgroundColor: THEME_COLORS.background,
   },
   
+  // 顶部标题栏
+  headerBar: {
+    backgroundColor: THEME_COLORS.primary,
+    paddingTop: 24,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  
   // 搜索栏
   searchBar: {
     margin: 16,
